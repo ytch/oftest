@@ -396,7 +396,58 @@ class Grp70No70(base_tests.SimpleDataPlane):
         receive_pkt_check(self.dataplane, pkt, yes_ports,set(of_ports).difference([ingress_port]),
                           self)
 
+class Grp70No80(base_tests.SimpleDataPlane):
 
+    """Forward:NORMAL : Verify implementation of the Forward: NORMAL function."""
+
+    @wireshark_capture
+    def runTest(self):
+
+        logging = get_logger()
+        logging.info("Running Forward:NORMAL Grp70No80 test")
+
+        of_ports = config["port_map"].keys()
+        of_ports.sort()
+        self.assertTrue(len(of_ports) > 1, "Not enough ports for test")
+
+        #Clear switch state
+        rv = delete_all_flows(self.controller)
+        self.assertEqual(rv, 0, "Failed to delete all flows")
+
+        logging.info("Install a flow with OFPP_NORMAL action")
+        logging.info("Send packets matching that flow")
+        logging.info("Expecting matched_count is increased")
+
+        # Insert a flow wildcard all without any action
+        pkt = simple_tcp_packet()
+        match = parse.packet_to_flow_match(pkt)
+        self.assertTrue(match is not None, "Could not generate flow match from pkt")
+        match.wildcards=ofp.OFPFW_ALL
+        match.in_port = of_ports[0]
+
+        act = action.action_output()
+        act.port = ofp.OFPP_NORMAL
+
+        msg = message.flow_mod()
+        msg.command = ofp.OFPFC_ADD
+        msg.buffer_id = 0xffffffff
+        msg.match = match
+        msg.actions.add(act)
+        rv = self.controller.message_send(msg)
+        self.assertTrue(rv != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
+
+        #Sending N packets matching the flow inserted
+        for pkt_cnt in range(5):
+            self.dataplane.send(of_ports[0],str(pkt))
+        sleep(2)
+        #Verify packet_count is incremented
+        verify_flowstats(self,match=match,packet_count=5)
+
+        #Verify packets not sent on control plane either
+        (response, raw) = self.controller.poll(ofp.OFPT_PACKET_IN, timeout=1)
+        self.assertTrue(response is None,
+                        'Packets not received on control plane')
 
 class Grp70No90(base_tests.SimpleDataPlane):
     
