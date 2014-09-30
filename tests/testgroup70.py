@@ -444,11 +444,6 @@ class Grp70No80(base_tests.SimpleDataPlane):
         #Verify packet_count is incremented
         verify_flowstats(self,match=match,packet_count=5)
 
-        #Verify packets not sent on control plane either
-        (response, raw) = self.controller.poll(ofp.OFPT_PACKET_IN, timeout=1)
-        self.assertTrue(response is None,
-                        'Packets not received on control plane')
-
 class Grp70No90(base_tests.SimpleDataPlane):
     
     """Forward:Flood : Packet is sent to all dataplane ports
