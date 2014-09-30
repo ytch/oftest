@@ -418,7 +418,7 @@ class Grp70No80(base_tests.SimpleDataPlane):
         logging.info("Send packets matching that flow")
         logging.info("Expecting matched_count is increased")
 
-        # Insert a flow wildcard all without any action
+        # Insert a flow wildcard all with output to OFPP_NORMAL action
         pkt = simple_tcp_packet()
         match = parse.packet_to_flow_match(pkt)
         self.assertTrue(match is not None, "Could not generate flow match from pkt")
