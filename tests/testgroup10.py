@@ -709,7 +709,10 @@ class Grp10No120(base_tests.SimpleDataPlane):
         no_ports = set(of_ports)
         receive_pkt_check(self.dataplane,pkt,yes_ports,no_ports,self)
         logging.info("All the standard flows are deleted after time out")
-        self.controller.connect()
+        self.controller = controller.Controller(
+            host=config["controller_host"],
+            port=config["controller_port"])
+        self.assertTrue(self.controller.connect()==True, "controller connection failed")
         sleep(2)
         self.dataplane.send(of_ports[2],str(pkt_matchingress))
         receive_pkt_verify(self,of_ports[3],str(pkt_matchingress),of_ports[2])
