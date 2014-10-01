@@ -406,6 +406,7 @@ class Grp80No210(base_tests.SimpleDataPlane):
             for pkt in frag_pkts:
                 self.dataplane.send(of_ports[0], str(pkt))
                 receive_pkt_check(self.dataplane, pkt,[yes_ports], no_ports, self)
+
 class Grp80No250(base_tests.SimpleDataPlane):
 
     """Verify switch is follow the value of miss_send_len in OFPT_GET_CONFIG_REPLY message """
@@ -431,7 +432,8 @@ class Grp80No250(base_tests.SimpleDataPlane):
         logging.info("miss_send_len: " + str(miss_send_len))
 
         # Send packet to trigger packet_in event
-        pkt = simple_tcp_packet()
+        # TODO: pkt size SHOULD >= miss_send_len, need a value based on miss_send_len?
+        pkt = simple_tcp_packet(pktlen=1500)
         match = parse.packet_to_flow_match(pkt)
         self.assertTrue(match is not None, "Could not generate flow match from pkt")
         match.wildcards=ofp.OFPFW_ALL
@@ -449,9 +451,9 @@ class Grp80No250(base_tests.SimpleDataPlane):
             logging.info("PacketIn message is unbuffered")
             self.assertTrue(len(response.data)==len(str(pkt)),"buffer_id of packet_in is -1, however data field of packet_in was the wrong size. Expected {0}, but received {1}".format(len(str(pkt)), len(response.data)))
         elif (miss_send_len==0):
-            self.assertEqual(len(response.data),bytes,"PacketIn Size is not equal to miss_send_len")
+            self.assertEqual(len(response.data),miss_send_len,"PacketIn Size is not equal to miss_send_len")
         else:
-            self.assertTrue(len(response.data)>=bytes,"PacketIn Size is not atleast miss_send_len bytes")
+            self.assertTrue(len(response.data)>=miss_send_len,"PacketIn Size {0} is not atleast miss_send_len bytes {1}".format(len(response.data), miss_send_len))
 
 class Grp80No260(base_tests.SimpleProtocol):
 
