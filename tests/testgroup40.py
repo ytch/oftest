@@ -1058,7 +1058,7 @@ class Grp40No210(base_tests.SimpleDataPlane):
         t.join()
 
     def background_traffic(self, ingress_port, pkt):
-        #send 10 packets
-        for i in range(0, 10, 1):
+        #send 6 packets in 3 seconds
+        for i in range(6):
             self.dataplane.send(ingress_port,pkt)
             time.sleep(0.5)
