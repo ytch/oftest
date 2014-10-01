@@ -354,11 +354,6 @@ class Grp80No200(base_tests.SimpleProtocol):
         self.assertEqual(reply.header.type, ofp.OFPT_GET_CONFIG_REPLY,'Response is not Config Reply')
         self.assertEqual(reply.header.xid,request.header.xid,'Transaction id does not match')
         
-        #Grp80No250
-        if reply.miss_send_len == 0 :
-           logging.info ("the switch must send zero-size packet_in message")
-        else :
-            logging.info("miss_send_len: " + str(reply.miss_send_len))
         #Grp80No220
         if reply.flags == 1 :
             logging.info("OFPC_FRAG_DROP:Drop fragments.")
@@ -411,6 +406,52 @@ class Grp80No210(base_tests.SimpleDataPlane):
             for pkt in frag_pkts:
                 self.dataplane.send(of_ports[0], str(pkt))
                 receive_pkt_check(self.dataplane, pkt,[yes_ports], no_ports, self)
+class Grp80No250(base_tests.SimpleDataPlane):
+
+    """Verify switch is follow the value of miss_send_len in OFPT_GET_CONFIG_REPLY message """
+    @wireshark_capture
+    def runTest(self):
+        logging = get_logger()
+        logging.info("Running Grp80No250 OFPT_GET_CONFIG_REPLY miss_send_len Test")
+
+        #Send get_config_request
+        logging.info("Sending Get Config Request...")
+        request = message.get_config_request()
+        (reply, pkt) = self.controller.transact(request)
+
+        #Verify get_config_reply is recieved
+        logging.info("Expecting GetConfigReply ")
+        self.assertTrue(reply is not None, "Failed to get any reply")
+        self.assertEqual(reply.header.type, ofp.OFPT_GET_CONFIG_REPLY,'Response is not Config Reply')
+        self.assertEqual(reply.header.xid,request.header.xid,'Transaction id does not match')
+
+        miss_send_len = reply.miss_send_len
+        of_ports = config["port_map"].keys()
+        of_ports.sort()
+        logging.info("miss_send_len: " + str(miss_send_len))
+
+        # Send packet to trigger packet_in event
+        pkt = simple_tcp_packet()
+        match = parse.packet_to_flow_match(pkt)
+        self.assertTrue(match is not None, "Could not generate flow match from pkt")
+        match.wildcards=ofp.OFPFW_ALL
+        match.in_port = of_ports[0]
+        self.dataplane.send(of_ports[0],str(pkt))
+
+        #Verify packet_in generated
+        (response, raw) = self.controller.poll(ofp.OFPT_PACKET_IN, timeout=3)
+        self.assertTrue(response is not None,
+                    'Packet In not received on control plane')
+        self.assertEqual(response.reason, ofp.OFPR_NO_MATCH, 'PacketIn received for reason other than OFPR_NO_MATCH. Reason was {0}.'.format(response.reason))
+
+        #Verify buffer_id field and data field
+        if response.buffer_id == 0xFFFFFFFF:
+            logging.info("PacketIn message is unbuffered")
+            self.assertTrue(len(response.data)==len(str(pkt)),"buffer_id of packet_in is -1, however data field of packet_in was the wrong size. Expected {0}, but received {1}".format(len(str(pkt)), len(response.data)))
+        elif (miss_send_len==0):
+            self.assertEqual(len(response.data),bytes,"PacketIn Size is not equal to miss_send_len")
+        else:
+            self.assertTrue(len(response.data)>=bytes,"PacketIn Size is not atleast miss_send_len bytes")
 
 class Grp80No260(base_tests.SimpleProtocol):
 
