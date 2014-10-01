@@ -24,6 +24,7 @@ from oftest.oflog import *
 from oftest.testutils import *
 from time import sleep
 from FuncUtils import *
+from threading import Thread
 
 class Grp40No10(base_tests.SimpleDataPlane):
     """Verify that flow mod overlaps trigger an error message.
@@ -1018,7 +1019,7 @@ class Grp40No210(base_tests.SimpleDataPlane):
         self.assertEqual(rc, 0, "Failed to delete all flows")
 
         logging.info("Inserting flow entry with hard_timeout set and send_flow_removed_message flag set")
-	   
+        
         # Insert a flow with hard_timeout = 1 but no Send_Flow_Rem flag set
         pkt = simple_tcp_packet()
         match3 = parse.packet_to_flow_match(pkt)
