@@ -1296,8 +1296,79 @@ class Grp50No190(base_tests.SimpleDataPlane):
         logging.info("Verifying whether the switch implements the actions specified in the highest priority flow entry")
         receive_pkt_check(self.dataplane,pkt,[yes_ports],no_ports,self)
 
+class Grp50No200(base_tests.SimpleDataPlane):
 
+    """Verify that fragmented packet Match with highest priority overrides the low priority Match """
+    @wireshark_capture
+    def runTest(self):
+        logging = get_logger()
+        logging.info("Running Grp50No200 Fragmented Match High Priority test")
 
+        of_ports = config["port_map"].keys()
+        of_ports.sort()
+        self.assertTrue(len(of_ports) > 1, "Not enough ports for test")
+
+        logging.info("Verify if switch supports the action -- reassemble IP fragments, if not skip the test")
+        sup_acts = sw_supported_actions(self)
+        if not(sup_acts & 1<<ofp.OFPC_IP_REASM):
+           skip_message_emit(self, "IP fragments test skipped")
+           return
+
+        #Clear Switch State
+        rc = delete_all_flows(self.controller)
+        self.assertTrue(rc != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
+
+        egress_port=of_ports[1]
+        no_ports=set(of_ports).difference([egress_port])
+        yes_ports = egress_port
+
+        logging.info("Generating fragmented TCP packet")
+        pkts = simple_frag_packets()
+
+        #first flow
+        logging.info("Installing two overlapping flow entries with different priorities ")
+        msg = message.flow_mod()
+        msg.command = ofp.OFPFC_ADD
+        msg.buffer_id = 0xffffffff
+        msg.match.in_port = of_ports[0]
+        msg.match.wildcards = ofp.OFPFW_ALL^ofp.OFPFW_DL_TYPE^ofp.OFPFW_NW_PROTO^ofp.OFPFW_TP_DST
+        msg.match.dl_type = IP_ETHERTYPE
+        msg.match.nw_proto = TCP_PROTOCOL
+        msg.match.tp_dst = 80
+
+        act = action.action_output()
+        act.port = of_ports[1]
+        self.assertTrue(msg.actions.add(act), "could not add action")
+        msg.priority = 20
+
+        rv = self.controller.message_send(msg)
+        self.assertTrue(rv != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")    
+
+        #second flow
+        msg = message.flow_mod()
+        msg.command = ofp.OFPFC_ADD
+        msg.buffer_id = 0xffffffff
+        msg.match.in_port = of_ports[0]
+        msg.match.wildcards = ofp.OFPFW_ALL^ofp.OFPFW_DL_TYPE^ofp.OFPFW_NW_PROTO^ofp.OFPFW_TP_DST
+        msg.match.dl_type = IP_ETHERTYPE
+        msg.match.nw_proto = TCP_PROTOCOL
+        msg.match.tp_dst = 800
+
+        act = action.action_output()
+        act.port = of_ports[2]
+        self.assertTrue(msg.actions.add(act), "could not add action")
+        msg.priority = 10
+
+        rv = self.controller.message_send(msg)
+        self.assertTrue(rv != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
+
+        #Sending packet matching both the flows , verify it implements the action specified by Higher Priority flow
+        for pkt in pkts:
+            self.dataplane.send(of_ports[0], str(pkt))
+            receive_pkt_check(self.dataplane, pkt,[yes_ports], no_ports, self)
 
 class Grp50No210(base_tests.SimpleDataPlane):
     """ Verify that the switch matches on the ether type=0x0806 and also the IP source address"""
