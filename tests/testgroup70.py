@@ -1003,3 +1003,34 @@ class Grp70No230(base_tests.SimpleDataPlane):
         flow_match_test(self, config["port_map"], pkt=pkt, exp_pkt=exp_pkt, 
                         action_list=acts, max_test=2)
 
+class Grp70No240(base_tests.SimpleProtocol):
+    """
+    Ordering not possible - cannot process in order specified
+    If a switch cannot process the action list for any  flow mod message in the order specied,
+    it must return an Error with error.type OFPET_FLOW_MOD_FAILED and error.code OFPFMFC_UNSUPPORTED or ofp.OFPFMFC_EPERM and reject the flow """
+
+    @wireshark_capture
+    def runTest(self):
+        logging = get_logger()
+        logging.info("Running FlowModFailed Ordering not possible Grp70No240 test")
+
+        msg = message.flow_mod()
+        act1 = action.action_output()
+        act2 = action.action_set_tp_src()
+        act1.port = 99
+        act2.tp_port = 8080
+        
+        self.assertTrue(msg.actions.add(act1), "Could not add action")
+        self.assertTrue(msg.actions.add(act2), "Could not add action")
+
+        packed=msg.pack()
+
+        rv=self.controller.message_send(packed)
+        self.assertTrue(rv==0,"Unable to send the message")
+
+
+        (response, raw) = self.controller.poll(ofp.OFPT_ERROR, timeout=10)
+        self.assertTrue(response is not None,"Did not receive an error")
+        self.assertTrue(response.type==ofp.OFPET_FLOW_MOD_FAILED,"Unexpected Error type. Expected OFPET_FLOW_MOD_FAILED error type")
+        self.assertTrue(response.code==ofp.OFPFMFC_UNSUPPORTED or response.code==ofp.OFPFMFC_EPERM," Unexpected error code, Expected ofp.OFPFMFC_UNSUPPORTED or ofp.OFPFMFC_EPERM error code got{0}" .format(response.code))
+
