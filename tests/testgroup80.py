@@ -415,6 +415,10 @@ class Grp80No250(base_tests.SimpleDataPlane):
         logging = get_logger()
         logging.info("Running Grp80No250 OFPT_GET_CONFIG_REPLY miss_send_len Test")
 
+        rc = delete_all_flows(self.controller)
+        self.assertTrue(rc != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
+
         #Send get_config_request
         logging.info("Sending Get Config Request...")
         request = message.get_config_request()
@@ -434,10 +438,6 @@ class Grp80No250(base_tests.SimpleDataPlane):
         # Send packet to trigger packet_in event
         # TODO: pkt size SHOULD >= miss_send_len, need a value based on miss_send_len?
         pkt = simple_tcp_packet(pktlen=1500)
-        match = parse.packet_to_flow_match(pkt)
-        self.assertTrue(match is not None, "Could not generate flow match from pkt")
-        match.wildcards=ofp.OFPFW_ALL
-        match.in_port = of_ports[0]
         self.dataplane.send(of_ports[0],str(pkt))
 
         #Verify packet_in generated
