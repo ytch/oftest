@@ -1009,7 +1009,6 @@ class Grp70No240(base_tests.SimpleProtocol):
     If a switch cannot process the action list for any  flow mod message in the order specied,
     it must return an Error with error.type OFPET_FLOW_MOD_FAILED and error.code OFPFMFC_UNSUPPORTED or ofp.OFPFMFC_EPERM and reject the flow """
 
-    @wireshark_capture
     def runTest(self):
         logging = get_logger()
         logging.info("Running FlowModFailed Ordering not possible Grp70No240 test")
