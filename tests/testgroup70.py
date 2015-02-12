@@ -1009,7 +1009,6 @@ class Grp70No250(base_tests.SimpleDataPlane):
 
     """Sequential execution : Verify sequential execution by tag VLAN and output action."""
 
-    @wireshark_capture
     def runTest(self):
 
         logging = get_logger()
