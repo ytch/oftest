@@ -1013,6 +1013,10 @@ class Grp70No240(base_tests.SimpleProtocol):
         logging = get_logger()
         logging.info("Running FlowModFailed Ordering not possible Grp70No240 test")
 
+        rc = delete_all_flows(self.controller)
+        self.assertTrue(rc != -1, "Error installing flow mod")
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
+
         msg = message.flow_mod()
         act1 = action.action_output()
         act2 = action.action_set_tp_src()
@@ -1026,7 +1030,7 @@ class Grp70No240(base_tests.SimpleProtocol):
 
         rv=self.controller.message_send(packed)
         self.assertTrue(rv==0,"Unable to send the message")
-
+        self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
 
         (response, raw) = self.controller.poll(ofp.OFPT_ERROR, timeout=10)
         self.assertTrue(response is not None,"Did not receive an error")
