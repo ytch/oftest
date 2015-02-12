@@ -410,7 +410,6 @@ class Grp80No210(base_tests.SimpleDataPlane):
 class Grp80No250(base_tests.SimpleDataPlane):
 
     """Verify switch is follow the value of miss_send_len in OFPT_GET_CONFIG_REPLY message """
-    @wireshark_capture
     def runTest(self):
         logging = get_logger()
         logging.info("Running Grp80No250 OFPT_GET_CONFIG_REPLY miss_send_len Test")
