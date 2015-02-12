@@ -1299,7 +1299,6 @@ class Grp50No190(base_tests.SimpleDataPlane):
 class Grp50No200(base_tests.SimpleDataPlane):
 
     """Verify that fragmented packet Match with highest priority overrides the low priority Match """
-    @wireshark_capture
     def runTest(self):
         logging = get_logger()
         logging.info("Running Grp50No200 Fragmented Match High Priority test")
