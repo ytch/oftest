@@ -400,7 +400,6 @@ class Grp70No80(base_tests.SimpleDataPlane):
 
     """Forward:NORMAL : Verify implementation of the Forward: NORMAL function."""
 
-    @wireshark_capture
     def runTest(self):
 
         logging = get_logger()
