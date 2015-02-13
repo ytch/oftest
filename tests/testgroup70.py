@@ -1013,6 +1013,10 @@ class Grp70No240(base_tests.SimpleProtocol):
         logging = get_logger()
         logging.info("Running FlowModFailed Ordering not possible Grp70No240 test")
 
+        of_ports = config["port_map"].keys()
+        of_ports.sort()
+        self.assertTrue(len(of_ports) > 1, "Not enough ports for test")
+
         rc = delete_all_flows(self.controller)
         self.assertTrue(rc != -1, "Error installing flow mod")
         self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
@@ -1020,7 +1024,7 @@ class Grp70No240(base_tests.SimpleProtocol):
         msg = message.flow_mod()
         act1 = action.action_output()
         act2 = action.action_set_tp_src()
-        act1.port = 99
+        act1.port = of_ports[0]
         act2.tp_port = 8080
         
         self.assertTrue(msg.actions.add(act1), "Could not add action")
