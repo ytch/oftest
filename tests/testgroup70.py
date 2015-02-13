@@ -1022,6 +1022,7 @@ class Grp70No240(base_tests.SimpleProtocol):
         self.assertEqual(do_barrier(self.controller), 0, "Barrier failed")
 
         msg = message.flow_mod()
+        msg.command = ofp.OFPFC_ADD
         act1 = action.action_output()
         act2 = action.action_set_tp_src()
         act1.port = of_ports[0]
