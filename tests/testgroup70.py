@@ -1007,7 +1007,7 @@ class Grp70No240(base_tests.SimpleProtocol):
     """
     Ordering not possible - cannot process in order specified
     If a switch cannot process the action list for any  flow mod message in the order specied,
-    it must return an Error with error.type OFPET_FLOW_MOD_FAILED and error.code OFPFMFC_UNSUPPORTED or ofp.OFPFMFC_EPERM and reject the flow """
+    it must return an Error with error.type OFPET_FLOW_MOD_FAILED and error.code OFPFMFC_UNSUPPORTED and reject the flow """
 
     def runTest(self):
         logging = get_logger()
