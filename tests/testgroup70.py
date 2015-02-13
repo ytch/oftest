@@ -1038,6 +1038,6 @@ class Grp70No240(base_tests.SimpleProtocol):
 
         (response, raw) = self.controller.poll(ofp.OFPT_ERROR, timeout=10)
         self.assertTrue(response is not None,"Did not receive an error")
-        self.assertTrue(response.type==ofp.OFPET_FLOW_MOD_FAILED,"Unexpected Error type. Expected OFPET_FLOW_MOD_FAILED error type")
-        self.assertTrue(response.code==ofp.OFPFMFC_UNSUPPORTED," Unexpected error code, Expected ofp.OFPFMFC_UNSUPPORTED or ofp.OFPFMFC_EPERM error code got{0}" .format(response.code))
+        self.assertTrue(response.type==ofp.OFPET_FLOW_MOD_FAILED,"Unexpected Error type. Expected OFPET_FLOW_MOD_FAILED error type got {0}".format(response.type))
+        self.assertTrue(response.code==ofp.OFPFMFC_UNSUPPORTED," Unexpected error code, Expected ofp.OFPFMFC_UNSUPPORTED error code got {0}" .format(response.code))
 
